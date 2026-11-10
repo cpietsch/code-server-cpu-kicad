@@ -27,19 +27,21 @@ Key design decisions:
 
 ## Deployment in Coolify
 
-1. Create a Git repo with `Dockerfile`, `sshd_dev.conf`, `entrypoint.sh`, `docker-compose.yml`, `bin/pcb-check`, and `templates/CLAUDE.md` (exactly the files from this folder — the build copies `bin/` and `templates/` too).
-2. In Coolify: **Project → + New Resource → Docker Compose Empty** (or "Application" → "Docker Compose" if building from Git).
-3. Paste the Compose file or connect the Git repo.
+The `dev` image is prebuilt by GitHub Actions on every push to `main` and published as `ghcr.io/cpietsch/code-server-cpu-kicad` (tags: `latest` and the full commit SHA). Coolify only pulls it — no 5-minute KiCad build on the host.
+
+1. In Coolify: **Project → + New Resource → Docker Compose Empty**.
+2. Paste `docker-compose.yml`. (Pin `image:` to a commit SHA tag for reproducible deploys and easy rollbacks.)
+3. Building on the host instead (e.g. for the KiCad 3D models): use "Application" → "Docker Compose" with this Git repo, and in the `dev` service swap `image:` for the commented `build:` block.
 4. Set the following **Environment Variables** in the Coolify UI:
 
    | Variable | Example / Notes |
    |---|---|
    | `TS_AUTHKEY` | `tskey-auth-...` from https://login.tailscale.com/admin/settings/keys. Recommended: *Reusable*, do NOT set *Ephemeral* (you want to keep the host), enable *Pre-approved* if you use device approval. |
-   | `INSTALL_KICAD_3D` | optional, `true` to include KiCad 3D models (~6 GB) |
+   | `INSTALL_KICAD_3D` | optional, `true` to include KiCad 3D models (~6 GB). Only applies to host builds (`build:`), not the prebuilt image |
    | `TS_HOSTNAME` | `devbox-kicad` (or whatever you want to appear in your tailnet) |
    | `SSH_AUTHORIZED_KEYS` | Your public keys, one per line. Contents of `~/.ssh/id_ed25519.pub` |
 
-5. Deploy. On first start Coolify builds the image, both containers come up, and Tailscale registers the device.
+5. Deploy. Coolify pulls the image, all containers come up, and Tailscale registers the device.
 
 ## Initial Setup After First Deploy
 
@@ -120,7 +122,7 @@ The `CLAUDE.md` template tells Claude Code to run `pcb-check` after every change
 
 Notes:
 - **Python venvs:** `pcbnew` is a system module. Use `eda-python`, or create venvs with `uv venv --system-site-packages` / `python3 -m venv --system-site-packages`.
-- **3D models** (~6 GB) are off by default. Set `INSTALL_KICAD_3D=true` in Coolify and rebuild if you need STEP exports with component bodies for enclosure fit checks.
+- **3D models** (~6 GB) are off by default. The prebuilt image never has them; switch the `dev` service to `build:` with `INSTALL_KICAD_3D=true` if you need STEP exports with component bodies for enclosure fit checks.
 - **Library tables** are seeded into `~/.config/kicad/9.0/` on first start; your edits there persist.
 - **Reviewing in the GUI:** push the project and open it in KiCad on your laptop.
 
@@ -154,7 +156,7 @@ The image is ~2–3 GB larger than the base devbox because of KiCad (~8 GB more 
 
 ## Updates
 
-- **Update Node/Python/tools**: trigger a redeploy in Coolify (rebuild image). Workspace and home volumes are preserved.
+- **Update Node/Python/tools**: change the Dockerfile and push to `main`; GitHub Actions builds and pushes a new image. Then redeploy in Coolify to pull it. Workspace and home volumes are preserved.
 - **Update Tailscale**: redeploy only the `tailscale` service; the dev container stays live.
 - **Update Claude Code**: `npm update -g @anthropic-ai/claude-code` inside an SSH session.
 

@@ -7,8 +7,8 @@
 #        - TS_AUTHKEY              Tailscale auth key (tskey-auth-...); reusable, NOT ephemeral
 #        - TS_HOSTNAME             Hostname in your tailnet, e.g. "devbox-kicad"
 #        - SSH_AUTHORIZED_KEYS     Your SSH public keys (newline-separated)
-#   4. Build the image: either push this repo to git and let Coolify build it,
-#      or pre-build on the host and reference the tag in `image:` below.
+#   4. The dev image is pulled prebuilt from ghcr.io (built by GitHub Actions).
+#      To build on the host instead, see the `dev` service below.
 #
 # The dev container has NO published ports on the host. It's only reachable
 # through Tailscale, using TS_HOSTNAME as the tailnet name.
@@ -66,15 +66,18 @@ services:
       retries: 10
 
   dev:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        # ~6 GB of 3D models; only needed for STEP export with part bodies.
-        INSTALL_KICAD_3D: ${INSTALL_KICAD_3D:-false}
-        INSTALL_CAD: ${INSTALL_CAD:-true}
-    # If you'd rather pre-build and push, comment `build:` and set `image:`:
-    # image: ghcr.io/YOUR_USER/devbox:latest
+    # Prebuilt by GitHub Actions on every push to main (.github/workflows/image.yml).
+    # Pin a commit tag (ghcr.io/cpietsch/code-server-cpu-kicad:<full sha>) for
+    # reproducible deploys / rollbacks.
+    image: ghcr.io/cpietsch/code-server-cpu-kicad:latest
+    # To build on the host instead (e.g. with the ~6 GB KiCad 3D models),
+    # remove `image:` above and uncomment `build:`:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    #   args:
+    #     INSTALL_KICAD_3D: ${INSTALL_KICAD_3D:-false}
+    #     INSTALL_CAD: ${INSTALL_CAD:-true}
     container_name: devbox-kicad-dev
     depends_on:
       - tailscale
