@@ -11,7 +11,7 @@
 #   render-top/bottom.png      3D raytraced renders           (--render)
 #   ../fab/                    JLCPCB gerbers, BOM, CPL via kikit (--fab)
 #
-# Exit code: 0 clean, 1 ERC/DRC violations, 2 usage/setup error.
+# Exit code: 0 clean, 1 ERC/DRC violations or failed --fab, 2 usage/setup error.
 # Meant to be run by Claude Code after every schematic or layout change.
 set -uo pipefail
 
@@ -78,7 +78,13 @@ if [ -f "$PCB" ]; then
 
   if [ "$FAB" = 1 ]; then
     rm -rf out/fab
-    kikit fab jlcpcb --assembly --field LCSC --schematic "$SCH" --no-drc "$PCB" out/fab >/dev/null && echo "FAB: out/fab (gerbers, bom.csv, pos.csv)"
+    # kikit/wx print noisy debug lines on stderr; keep them in a log, show only on failure.
+    if kikit fab jlcpcb --assembly --field LCSC --schematic "$SCH" --no-drc "$PCB" out/fab >"$OUT/kikit.log" 2>&1; then
+      echo "FAB: out/fab (gerbers, bom.csv, pos.csv)"
+    else
+      echo "FAB: failed, see $OUT/kikit.log"; grep -v "Debug:" "$OUT/kikit.log" | tail -5
+      FAIL=1
+    fi
   fi
 fi
 

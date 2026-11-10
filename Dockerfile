@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         git git-lfs openssh-server sudo locales tzdata \
         build-essential pkg-config \
         zsh tmux vim nano htop procps jq ripgrep fd-find bat unzip zip \
-        iputils-ping dnsutils net-tools \
+        iputils-ping dnsutils net-tools iproute2 ffmpeg \
         python${PYTHON_VERSION} python${PYTHON_VERSION}-venv python${PYTHON_VERSION}-dev \
         python3-pip python3-setuptools pipx \
     && ln -sf /usr/bin/python${PYTHON_VERSION} /usr/local/bin/python \

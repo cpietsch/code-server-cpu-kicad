@@ -2,7 +2,7 @@
 
 Fork of [code-server-cpu](https://github.com/cpietsch/code-server-cpu) with a headless KiCad 9 toolchain, so Claude Code can design, check and export PCBs end to end.
 
-A Tailscale-accessible dev container running on your Coolify host, with Python, Node, Docker CLI (against an isolated DinD daemon), an SSH server for Cursor/VS Code Remote, and the usual tools (git, gh, uv, pnpm, ripgrep, zsh, tmux).
+A Tailscale-accessible dev container running on your Coolify host, with Python, Node, Docker CLI (against an isolated DinD daemon), an SSH server for Cursor/VS Code Remote, and the usual tools (git, gh, uv, pnpm, ripgrep, zsh, tmux, ffmpeg, iproute2).
 
 ## Architecture
 
