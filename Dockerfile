@@ -106,7 +106,10 @@ RUN /usr/bin/python3 -m venv --system-site-packages /opt/eda \
          /opt/eda/bin/pip install --no-cache-dir build123d \
          || echo "WARN: build123d install failed (no wheels for this Python?) — skipping CAD"; \
        fi \
-    && ln -sf /opt/eda/bin/python /usr/local/bin/eda-python \
+    # Wrapper, not a symlink: Python resolves symlinks to the base interpreter
+    # and then misses /opt/eda/pyvenv.cfg, so `import kikit` would fail.
+    && printf '#!/bin/sh\nexec /opt/eda/bin/python "$@"\n' > /usr/local/bin/eda-python \
+    && chmod 755 /usr/local/bin/eda-python \
     && ln -sf /opt/eda/bin/kikit  /usr/local/bin/kikit \
     && chmod -R a+rX /opt/eda
 

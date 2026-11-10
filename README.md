@@ -27,7 +27,7 @@ Key design decisions:
 
 ## Deployment in Coolify
 
-1. Create a Git repo with `Dockerfile`, `sshd_dev.conf`, `entrypoint.sh`, and `docker-compose.yml` (exactly the files from this folder).
+1. Create a Git repo with `Dockerfile`, `sshd_dev.conf`, `entrypoint.sh`, `docker-compose.yml`, `bin/pcb-check`, and `templates/CLAUDE.md` (exactly the files from this folder — the build copies `bin/` and `templates/` too).
 2. In Coolify: **Project → + New Resource → Docker Compose Empty** (or "Application" → "Docker Compose" if building from Git).
 3. Paste the Compose file or connect the Git repo.
 4. Set the following **Environment Variables** in the Coolify UI:
@@ -52,9 +52,9 @@ Your [Tailscale admin panel](https://login.tailscale.com/admin/machines) will sh
 On your laptop (Tailscale must also be running there):
 
 ```bash
-ssh dev@devbox           # MagicDNS is enough if enabled
+ssh dev@devbox-kicad           # MagicDNS is enough if enabled
 # or
-ssh dev@devbox.<tailnet>.ts.net
+ssh dev@devbox-kicad.<tailnet>.ts.net
 ```
 
 On first connect you confirm the host key (it is persisted in the `devbox-kicad-sshhostkeys` volume, so it survives rebuilds).
@@ -62,14 +62,14 @@ On first connect you confirm the host key (it is persisted in the `devbox-kicad-
 ### `~/.ssh/config` on your laptop
 
 ```ssh-config
-Host devbox
-    HostName devbox.<tailnet>.ts.net
+Host devbox-kicad
+    HostName devbox-kicad.<tailnet>.ts.net
     User dev
     ForwardAgent yes
     ServerAliveInterval 30
 ```
 
-After that, in Cursor/VS Code: **Remote-SSH: Connect to Host... → devbox**.
+After that, in Cursor/VS Code: **Remote-SSH: Connect to Host... → devbox-kicad**.
 
 ### Install Claude Code
 
@@ -164,6 +164,6 @@ The image is ~2–3 GB larger than the base devbox because of KiCad (~8 GB more 
 - **Coolify stays on "unknown"**: every service needs a healthcheck or Coolify will not mark the stack healthy. `dev` checks `pgrep -x sshd`. It can stay `starting` for up to 90s while the entrypoint waits for DinD certs.
 - **`docker: Cannot connect to the Docker daemon`**: DinD is still starting up or the certs have not been written yet. Check `docker compose logs dind` in Coolify. After a reboot it takes a few seconds for the daemon to become ready.
 - **`docker: tls: failed to verify certificate`**: The cert volume (`devbox-kicad-dind-certs`) was manually cleared or is inconsistent between the dind and dev containers. Restart both containers so dind generates fresh certs that the dev container can pick up.
-- **Host key warning on laptop after rebuild**: should not happen with the host-key volume. If it does: `ssh-keygen -R devbox` on the laptop, then reconnect once.
+- **Host key warning on laptop after rebuild**: should not happen with the host-key volume. If it does: `ssh-keygen -R devbox-kicad` on the laptop, then reconnect once.
 - **Tailscale container restarting in a loop**: usually an expired or invalid `TS_AUTHKEY`. Generate a new key, update the env var, redeploy.
 - **DinD volume too large**: `docker system prune -a` inside the dev container cleans up the DinD daemon and leaves the host Docker untouched.
